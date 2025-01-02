@@ -28,23 +28,14 @@ async def validate_item(item: Dict[str, str]) -> bool:
         return await check_remote_url(url)
     return os.path.exists(url)
 
-# Helper function for validate_playlist. Mimics Python's built-in filter but for async functions.
-async def async_filter(predicate: Callable[[Dict[str, str]], bool], iterable: List[Dict[str, str]]) -> AsyncGenerator:
-    for item in iterable:
-        if await predicate(item):
-            yield item
-
-# Validate the playlist. Returns a list of valid items.
+# Validate all items in the playlist asynchronously.
 async def validate_playlist(playlist: List[Dict[str, str]]) -> List[Dict[str, str]]:
     logger.info("Validating playlist...")
+    valid_items = []
 
-    # Ensure each item has both a 'title' and a 'url'
-    valid_items = [
-        item async for item in async_filter(
-            lambda i: "title" in i and "url" in i and await validate_item(i),
-            playlist,
-        )
-    ]
+    for item in playlist:
+        if "title" in item and "url" in item and await validate_item(item):
+            valid_items.append(item)
 
     logger.info(f"Validation complete. {len(valid_items)} valid items found.")
     return valid_items
