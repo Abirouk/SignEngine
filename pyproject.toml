@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "signengine"
+version = "0.1.0"
+description = ""
+authors = ["Aya Birouk <ayabirouk@gmail.com>"]
+readme = "README.md"
+packages = [{include = "signengine", from = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.13"
+httpx = "^0.28.1"
+pytest = "^8.3.4"
+pytest-asyncio = "^0.25.1"
+pytest-mock = "^3.14.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
