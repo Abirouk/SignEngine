@@ -54,7 +54,11 @@ class PlaybackEngine:
                 logger.error("Failed to create media object. Check the path or URL.")
                 return
 
-            self.player.set_media(media)
+            # Debugging lines
+            logger.debug(f"Media object created: {media}")
+            logger.debug("Setting media to player...")
+
+            await self.loop.run_in_executor(self.executor, self.player.set_media, media)
             logger.info("Starting playback...")
             await self.loop.run_in_executor(self.executor, self.player.play)
             logger.info("Playback started successfully.")
