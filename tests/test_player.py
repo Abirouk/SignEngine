@@ -14,6 +14,11 @@ def mock_vlc(mocker):
     mock_media_player = Mock()
     mock_media = Mock()
 
+    # Mock platform-specific video output methods
+    mock_media_player.set_nsobject = Mock()
+    mock_media_player.set_hwnd = Mock()
+    mock_media_player.set_xwindow = Mock()
+
     # Mock VLC behaviors
     mock_vlc_instance.media_player_new.return_value = mock_media_player
     mock_vlc_instance.media_new.return_value = mock_media
