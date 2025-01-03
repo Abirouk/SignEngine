@@ -20,7 +20,8 @@ class PlaybackEngine:
         logger.info("Initializing Playback Engine")
         self.instance = vlc.Instance()
         self.player = self.instance.media_player_new()
-        self.loop = asyncio.get_event_loop()
+        # Initialize the playback engine
+        self.loop = asyncio.get_running_loop()
 
         # Thread pool for non-async VLC operations
         self.executor = ThreadPoolExecutor(max_workers=4)

@@ -9,15 +9,6 @@ MEDIA_PATH = "http://example.com/video.mp4"
 VOLUME_LEVEL = 50
 
 
-# Fixture: Fresh event loop for each test
-@pytest.fixture
-def event_loop():
-    """Ensure a fresh event loop for each test."""
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    yield loop
-    loop.close()
-
 
 # Fixture: Mock VLC module and its components
 @pytest.fixture
@@ -52,12 +43,21 @@ def test_playback_engine_init(mock_vlc, playback_engine):
     """Test that PlaybackEngine initializes correctly."""
     mock_vlc_instance, mock_media_player, _ = mock_vlc
     mock_vlc_instance.media_player_new.assert_called_once()
-    mock_media_player.set_nsobject.assert_called_once_with(VIDEO_OUTPUT_ID)  # Adjust for platform
+
+    # Assert correct platform-specific video output is set
+    if hasattr(mock_media_player, "set_nsobject"):
+        mock_media_player.set_nsobject.assert_called_once_with(VIDEO_OUTPUT_ID)
+    elif hasattr(mock_media_player, "set_hwnd"):
+        mock_media_player.set_hwnd.assert_called_once_with(VIDEO_OUTPUT_ID)
+    elif hasattr(mock_media_player, "set_xwindow"):
+        mock_media_player.set_xwindow.assert_called_once_with(VIDEO_OUTPUT_ID)
+    else:
+        pytest.fail("No platform-specific video output method was called.")
 
 
 # Test: Play media
 @pytest.mark.asyncio
-async def test_playback_engine_play(mock_vlc, playback_engine, event_loop):
+async def test_playback_engine_play(mock_vlc, playback_engine):
     """Test that the play method sets the media and starts playback."""
     _, mock_media_player, mock_media = mock_vlc
 
