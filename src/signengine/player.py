@@ -14,14 +14,17 @@ logger = logging.getLogger("PlaybackEngine")
 # Async wrapper around VLC for video playback.
 class PlaybackEngine:
 
-    def __init__(self, video_output: Optional[int] = None):
-
-        #Initialize the playback engine.
+    def __init__(self, video_output: Optional[int] = None, loop: Optional[asyncio.AbstractEventLoop] = None):
+        # Initialize the playback engine
         logger.info("Initializing Playback Engine")
         self.instance = vlc.Instance()
         self.player = self.instance.media_player_new()
-        # Initialize the playback engine
-        self.loop = asyncio.get_running_loop()
+        
+        # Use provided loop or the running loop
+        if loop:
+            self.loop = loop
+        else:
+            self.loop = asyncio.get_running_loop()
 
         # Thread pool for non-async VLC operations
         self.executor = ThreadPoolExecutor(max_workers=4)
@@ -44,10 +47,23 @@ class PlaybackEngine:
             logger.warning("Unknown platform. Video output not set.")
 
     #Play a video file/stream
-    async def play(self, media_path: str):
+    async def play(self, media_path: Optional[str]):
+        """
+        Play the specified media. Stops any currently playing media before starting new playback.
+        """
+        # Validate the media path
+        if not media_path or not media_path.startswith(("http://", "https://")):
+            logger.warning(f"Invalid media path: {media_path}")
+            return
+
+        # Stop current playback if necessary
+        if await self.is_playing():
+            logger.info("Stopping current playback before starting new media...")
+            await self.stop()
 
         logger.info(f"Loading media: {media_path}")
         try:
+            # Create media
             media = await self.loop.run_in_executor(
                 self.executor, self.instance.media_new, media_path
             )
@@ -55,11 +71,8 @@ class PlaybackEngine:
                 logger.error("Failed to create media object. Check the path or URL.")
                 return
 
-            # Debugging lines
-            logger.debug(f"Media object created: {media}")
-            logger.debug("Setting media to player...")
-
-            await self.loop.run_in_executor(self.executor, self.player.set_media, media)
+            # Set and play media
+            self.player.set_media(media)
             logger.info("Starting playback...")
             await self.loop.run_in_executor(self.executor, self.player.play)
             logger.info("Playback started successfully.")
